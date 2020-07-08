@@ -40,6 +40,9 @@ class Api():
     def PyReadPositions(self):
         return self._instrument.read_all_positions()
 
+    def PyReadPosition(self,axis):
+        return self._instrument.read_position(axis)
+
     def PyReadPositionsAndOffsets(self):
         pos_off = []
         try:
@@ -52,6 +55,12 @@ class Api():
             pos_off.append({"number": i+1,"currentOffset":offsets[i],"desiredOffset":offsets[i],"currentPosition": positions[i],"desiredPosition": positions[i]})
         
         return pos_off
+
+    def PyMoveTrack(self,direction,speed,pos_target,axis):
+        self._instrument.mode_track_movement(axis,pos_target,direction,speed)
+
+    def PyMoveRegister(self,speed,pos_origin,pos_end,angular_increment,axis):
+        self._instrument.mode_register_movement(axis,pos_origin,pos_end,speed,angular_increment)
 
 
 if __name__ == '__main__':
