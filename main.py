@@ -38,10 +38,18 @@ class Api():
         return offsets
     
     def PyReadPositions(self):
-        return self._instrument.read_all_positions()
+        try:
+            positions = self._instrument.read_all_positions()
+        except:
+            return False
+        return positions
 
     def PyReadPosition(self,axis):
-        return self._instrument.read_position(axis)
+        try:
+            position = self._instrument.read_position(axis)
+        except:
+            return False
+        return position
 
     def PyReadPositionsAndOffsets(self):
         pos_off = []

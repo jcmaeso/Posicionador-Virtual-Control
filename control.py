@@ -139,8 +139,14 @@ class Instrument:
         self.open_connection()
         for i in range(1, n_ax+1):
             self._write_instrument("E{}<".format(i), delay=1)
-            positions.append(self._position_parser(
-                self._read_instrument("X2<")))
+            try:
+                position = self._position_parser(
+                    self._read_instrument("X2<"))
+            except:
+                raise
+            if position[0] != i:
+                raise Exception("Axis not matching")    
+            positions.append(position[1])
         return positions
 
     def mode_register_movement(self, axis, pos_origin, pos_end, speed, angular_increment):
