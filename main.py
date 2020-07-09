@@ -1,8 +1,10 @@
 import os
 import webview
 import threading
+import time
 from control import Instrument
 
+debug = True
 
 class Api():
     def __init__(self):
@@ -17,25 +19,26 @@ class Api():
         print("Called Get Number Axis")
         return self._n_axis
 
-    def PyWriteOffset(self,axis):
+    def PyWriteOffset(self,axis,offset):
         print("Called WriteOffset")
         try:
-            offset = self._instrument.write_offset(axis['number'],axis['desiredOffset'])
+            offset = self._instrument.write_offset(int(axis),float(offset))
         except:
             return False
         return offset
     
+    #Unused need just in case bulk read doesn't work
     def PyReadOffsets(self):
-        offsets = []
+        #offsets = []
         #Real
-        # read_ofset = self._instrument.read_all_offsets()
+        read_offsets = self._instrument.read_all_offsets()
         #Debug 
-        for ax in range(1,self._n_axis+1):
+        """for ax in range(1,self._n_axis+1):
             #read_ofset = self._instrument.read_offset(ax)
             #DebugTest
             #offsets.append({"number": ax,"currentOffset":read_ofset,"desiredOffset":read_ofset})
-            offsets.append({"number": ax,"currentOffset":ax+0.25,"desiredOffset":ax+0.25})
-        return offsets
+            offsets.append({"number": ax,"currentOffset":ax+0.25,"desiredOffset":ax+0.25}) """
+        return read_offsets
     
     def PyReadPositions(self):
         try:
@@ -45,30 +48,46 @@ class Api():
         return positions
 
     def PyReadPosition(self,axis):
+        print("Reading Position")
         try:
-            position = self._instrument.read_position(axis)
+            position = self._instrument.read_position(int(axis))
         except:
             return False
         return position
 
     def PyReadPositionsAndOffsets(self):
-        pos_off = []
-        try:
-            offsets = self.PyReadOffsets()
-            positions = self.PyReadPositions()
-        except:
-            return False
+        if(debug):
+            return [{"number": 1,"currentOffset":1,"desiredOffset":1,"currentPosition": 2,"desiredPosition": 2}]
         
+        pos_off = []
+        
+        offsets = self.PyReadOffsets()
+        positions = self.PyReadPositions()
+        #Check if exception has been made
+        if(type(offsets) is bool or type(positions) is bool):
+            return False
+
         for i in range(0,len(offsets)):
             pos_off.append({"number": i+1,"currentOffset":offsets[i],"desiredOffset":offsets[i],"currentPosition": positions[i],"desiredPosition": positions[i]})
         
         return pos_off
 
     def PyMoveTrack(self,direction,speed,pos_target,axis):
-        self._instrument.mode_track_movement(axis,pos_target,direction,speed)
+        if(debug):
+            time.sleep(8)
+            return True
+        try:
+            self._instrument.mode_track_movement(int(axis),float(pos_target),float(direction),float(speed))
+        except:
+            return False
+        return True
 
     def PyMoveRegister(self,speed,pos_origin,pos_end,angular_increment,axis):
-        self._instrument.mode_register_movement(axis,pos_origin,pos_end,speed,angular_increment)
+        try:
+            self._instrument.mode_register_movement(int(axis),float(pos_origin),float(pos_end),float(speed),float(angular_increment))
+        except:
+            return False
+        return True
 
 
 if __name__ == '__main__':
