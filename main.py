@@ -83,16 +83,39 @@ class Api():
         
         return self.PyReadPosition(axis)
 
-    def PyMoveRegister(self,speed,pos_origin,pos_end,angular_increment,axis):
+    def PyMoveRegister(self,direction,speed,pos_origin,pos_end,angular_increment,axis):
         try:
-            self._instrument.mode_register_movement(int(axis),float(pos_origin),float(pos_end),float(speed),float(angular_increment))
+            self._instrument.mode_register_movement(int(axis),float(pos_origin),float(pos_end),float(speed),float(angular_increment),direction)
         except:
             return False
         
         return self.PyReadPosition(axis)
+    
+    def PyReadLimit(self,axis):
+        limit = {}
+        try:
+            limit = self._instrument.read_limit(axis)
+        except:
+            return False
+        return limit
+
+    def PyReadLimits(self):
+        limits = []
+        try:
+            limits = self._instrument.read_limits()
+        except:
+            return False
+        return limits
+
+    def PyWriteLimit(self,axis,lim_fwd,lim_rev):
+        try:
+            self._instrument.write_limit(axis,lim_fwd,lim_rev)
+        except:
+            return False
+        return self.PyReadLimit(axis)
 
 
 if __name__ == '__main__':
     api = Api()
     webview.create_window('Control Virtual de Posiciones', 'dist/index.html', js_api=api, min_size=(650, 1200))
-    webview.start()
+    webview.start(debug=True)

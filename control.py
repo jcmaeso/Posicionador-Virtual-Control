@@ -48,10 +48,12 @@ class Instrument:
 
     def _write_instrument(self, query, delay=0.1):
         self._visa.write(query)
+        print(query)
         time.sleep(delay)
 
     def _read_instrument(self, query, delay=0.1):
         read = str(self._visa.query(query))
+        print(query+" --> "+read)
         time.sleep(delay)
         return read
 
@@ -66,6 +68,7 @@ class Instrument:
             print("Error: (ReadOffset) axis is not ok AX:" + str(axis))
             return
         self.open_connection()
+        self._write_instrument("H")
         self._write_instrument("S")
         try:
             read_offset = self._read_instrument("A{}<O<".format(axis))
@@ -81,6 +84,7 @@ class Instrument:
     def read_all_offsets(self, n_ax=6):
         offsets = []
         self.open_connection()
+        self._write_instrument("H")
         self._write_instrument("S")
         for i in range(1, n_ax+1):
             self._write_instrument("A{}<".format(i), delay=1)
@@ -97,6 +101,7 @@ class Instrument:
         elif (offset < 0 or offset >= 360):
             print("Error: (WriteOffset) offset is not ok AX:" +
                   str(axis) + " O:" + str(offset))
+            return
 
         self.open_connection()
         self._write_instrument("L")
@@ -155,9 +160,10 @@ class Instrument:
         self.close_connection()
         return positions
 
-    def mode_register_movement(self, axis, pos_origin, pos_end, speed, angular_increment):
+    def mode_register_movement(self, axis, pos_origin, pos_end, speed, angular_increment,direction):
         self.open_connection()
         self._write_instrument("L")
+        self._write_instrument("Da"+direction+"<")
         self._write_instrument("Aa{}<".format(axis))
         self._write_instrument(
             "Pas"+"".join("{:06.2f}".format(pos_origin).split("."))+"<")
@@ -191,6 +197,32 @@ class Instrument:
             if(self._read_status_byte() == 88):
                 break
             time.sleep(0.4)
+        self.close_connection()
+
+    
+    def read_limit(self,axis):
+        limit = {"number":axis}
+        self.open_connection()
+        self._write_instrument("H")
+        self._write_instrument("S")
+        limit["forwardLimit"] = self._offset_parser(self._read_instrument("A{}<Bf<".format(axis)));
+        limit["reverseLimit"] = self._offset_parser(self._read_instrument("A{}<Br<".format(axis)));
+        self._write_instrument("H")
+        self.close_connection()
+        return limit
+
+    def read_limits(self,n_ax=6):
+        limits = []
+        for i in range(1,n_ax+1):
+            limits.append(self.read_limit(i))
+        return limits
+    
+    def write_limit(self,axis,lim_fwd,lim_rev):
+        self.open_connection()
+        self._write_instrument("H")
+        self._write_instrument("L")
+        self._write_instrument("A{}<".format(axis)+"Bf"+"".join("{:06.2f}".format(lim_fwd).split(".")) + "<");
+        self._write_instrument("A{}<".format(axis)+"Br"+"".join("{:06.2f}".format(lim_rev).split(".")) + "<");
         self.close_connection()
 
     def tester(self):
