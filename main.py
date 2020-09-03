@@ -4,7 +4,7 @@ import threading
 import time
 from control import Instrument
 
-debug = True
+debug = False
 
 class Api():
     def __init__(self):
@@ -77,20 +77,22 @@ class Api():
             time.sleep(8)
             return True
         try:
-            self._instrument.mode_track_movement(int(axis),float(pos_target),float(direction),float(speed))
+            self._instrument.mode_track_movement(int(axis),float(pos_target),direction,float(speed))
         except:
             return False
-        return True
+        
+        return self.PyReadPosition(axis)
 
     def PyMoveRegister(self,speed,pos_origin,pos_end,angular_increment,axis):
         try:
             self._instrument.mode_register_movement(int(axis),float(pos_origin),float(pos_end),float(speed),float(angular_increment))
         except:
             return False
-        return True
+        
+        return self.PyReadPosition(axis)
 
 
 if __name__ == '__main__':
     api = Api()
-    webview.create_window('Todos magnificos', 'dist/index.html', js_api=api, min_size=(650, 1200))
+    webview.create_window('Control Virtual de Posiciones', 'dist/index.html', js_api=api, min_size=(650, 1200))
     webview.start()

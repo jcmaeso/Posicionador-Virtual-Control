@@ -35,7 +35,7 @@ class Instrument:
                 time.sleep(1)
             except:
                 print("Error openning Visa")
-        raise Exception("Connection Already Openned")
+                raise Exception("Connection Already Openned")
 
     def close_connection(self):
         if self._connection_open:
@@ -59,7 +59,7 @@ class Instrument:
         return self._visa.stb
 
     def _offset_parser(self, offset):
-        return float(read_offset[1:4] + "." + read_offset[4:])
+        return float(offset[1:len(offset)-4] + "." + offset[len(offset)-4:len(offset)-2])
 
     def read_offset(self, axis):
         if (axis <= 0 or axis > 6):
@@ -86,6 +86,7 @@ class Instrument:
             self._write_instrument("A{}<".format(i), delay=1)
             offsets.append(self._offset_parser(
                 self._read_instrument("O<")))
+        self.close_connection()
         return offsets
 
     def write_offset(self, axis, offset):
@@ -101,10 +102,10 @@ class Instrument:
         self._write_instrument("L")
         self._write_instrument("A{}<".format(axis))
         self._write_instrument(
-            "O".join("{:06.2f}".format(offset).split(".")) + "<")
+            "O"+"".join("{:06.2f}".format(offset).split(".")) + "<")
         self._write_instrument("H")
         # Save to permanent Memory
-        self._write_instrument("K<")
+        self._write_instrument("K<",delay=0.5)
         self.close_connection()
 
         # Check Offset written
@@ -114,7 +115,7 @@ class Instrument:
         return new_offset
 
     def _position_parser(self, position):
-        pos = float(position[5:len(position)-3]+"."+position[-3:])
+        pos = float(position[5:len(position)-5]+"."+position[-5:-3])
         ax = int(position[3])
         return (ax, pos)
 
@@ -123,7 +124,7 @@ class Instrument:
             print("Error: (WriteOffset) axis is not ok AX:" + str(axis))
 
         self.open_connection()
-        self._write_instrument("E{}<".format(axis))
+        self._write_instrument("E{}<".format(axis),delay=1)
         try:
             res = self._position_parser(self._read_instrument("X2<"))
         except:
@@ -131,7 +132,9 @@ class Instrument:
             self.close_connection()
             raise Exception("ERROR READING")
         if (res[0] != axis):
+            self.close_connection()
             raise Exception("Axis not matching")
+        self.close_connection()
         return res[1]
 
     def read_all_positions(self, n_ax=6):
@@ -143,10 +146,13 @@ class Instrument:
                 position = self._position_parser(
                     self._read_instrument("X2<"))
             except:
+                self.close_connection()
                 raise
             if position[0] != i:
+                self.close_connection()
                 raise Exception("Axis not matching")    
             positions.append(position[1])
+        self.close_connection()
         return positions
 
     def mode_register_movement(self, axis, pos_origin, pos_end, speed, angular_increment):
