@@ -16,11 +16,11 @@ class Api():
         self._instrument.tester()
 
     def PyGetNumberAxis(self):
-        print("Called Get Number Axis")
+        #print("Called Get Number Axis")
         return self._n_axis
 
     def PyWriteOffset(self,axis,offset):
-        print("Called WriteOffset")
+        #print("Called WriteOffset")
         try:
             offset = self._instrument.write_offset(int(axis),float(offset))
         except:
