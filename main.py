@@ -109,7 +109,7 @@ class Api():
 
     def PyWriteLimit(self,axis,lim_fwd,lim_rev):
         try:
-            self._instrument.write_limit(axis,float(lim_fwd),float(lim_rev))
+            self._instrument.write_limit(int(axis),float(lim_fwd),float(lim_rev))
         except:
             return False
         return self.PyReadLimit(axis)
